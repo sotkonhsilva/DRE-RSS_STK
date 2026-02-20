@@ -35,11 +35,15 @@ jobs:
 
       - name: Run RSS extractor
         run: |
-          cd scripts
-          python rss_dre_extractor.py
+          python scripts/rss_dre_extractor.py
         env:
           # Configurar timezone para Portugal
           TZ: Europe/Lisbon
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
 
       - name: Check if files were created
         run: |

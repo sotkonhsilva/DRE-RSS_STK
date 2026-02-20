@@ -73,7 +73,7 @@ export default function PortalPage() {
 
     const fetchData = async () => {
         try {
-            const response = await fetch('/data/ativos.json');
+            const response = await fetch('data/ativos.json');
             if (!response.ok) throw new Error('Falha ao carregar dados');
             const data = await response.json();
             setAllProcedimentos(data);
@@ -90,7 +90,7 @@ export default function PortalPage() {
         let localSeeds: Seed[] = saved ? JSON.parse(saved) : [];
 
         try {
-            const response = await fetch('/data/seeds.json');
+            const response = await fetch('data/seeds.json');
             if (response.ok) {
                 const serverSeeds: Seed[] = await response.json();
                 // Merge server seeds if they don't exist in local (by code)

@@ -4,6 +4,13 @@ import json
 import re
 import time
 import os
+import sys
+
+# Garantir que o script consegue importar módulos vizinhos se corrido da raiz
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.append(script_dir)
+
 from typing import List, Dict
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -52,31 +59,28 @@ def setup_driver():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-def fetch_procedure_details(url: str) -> Dict[str, str]:
+def fetch_procedure_details(driver, url: str) -> Dict[str, str]:
     """
-    Extrai detalhes de um procedimento específico a partir da URL
+    Extrai detalhes de um procedimento específico a partir da URL usando um driver já existente
     """
-    driver = None
-    try:
-        driver = setup_driver()
-        print(f"Acessando: {url}")
+    if not driver:
+        print("Erro: Driver não fornecido")
+        return None
         
+    try:
+        print(f"Acessando: {url}")
         driver.get(url)
         
         # Aguardar carregamento da página
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.TAG_NAME, "body"))
         )
         
-        # Aguardar um pouco mais para garantir que o JavaScript carregou
-        time.sleep(5)
+        # Aguardar um pouco para garantir que o JavaScript carregou
+        time.sleep(3)
         
         # Obter o HTML renderizado
         page_source = driver.page_source
-        
-        # Salvar HTML para debug
-        with open('debug_page_rendered.html', 'w', encoding='utf-8') as f:
-            f.write(page_source)
         
         # Usar BeautifulSoup para parsear o HTML
         soup = BeautifulSoup(page_source, 'html.parser')
@@ -95,16 +99,11 @@ def fetch_procedure_details(url: str) -> Dict[str, str]:
                 break
         
         if target_element:
-            # Encontrar o div pai que contém as informações
             parent_div = target_element.find_parent('div')
             if parent_div:
-                # Extrair todo o texto do div pai
                 details_text = parent_div.get_text(separator='\n', strip=True)
                 
-                # Extrair informações específicas usando regex
                 extracted_info = {}
-                
-                # Padrões para extrair informações específicas
                 patterns = {
                     'entidade': r'Designação da entidade adjudicante:\s*(.+?)(?:\n|$)',
                     'nipc': r'NIPC:\s*(\d+)',
@@ -139,15 +138,12 @@ def fetch_procedure_details(url: str) -> Dict[str, str]:
                     **extracted_info
                 }
         
-        print("Não foi possível encontrar as informações específicas")
         return None
         
     except Exception as e:
         print(f"Erro ao extrair detalhes: {e}")
         return None
-    finally:
-        if driver:
-            driver.quit()
+
 
 def extract_procedure_info(title: str, description: str) -> Dict[str, str]:
     """
@@ -297,25 +293,47 @@ def main():
     # Salvar dados básicos em JSON
     save_to_json(extracted_data, "procedimentos_basicos.json")
     
+    # Carregar base de dados existente para evitar re-scraping
+    existing_data = {}
+    try:
+        possible_completo_paths = ['RSS/procedimentos_completos.json', 'public/RSS/procedimentos_completos.json']
+        for p in possible_completo_paths:
+            if os.path.exists(p):
+                with open(p, 'r', encoding='utf-8') as f:
+                    data_list = json.load(f)
+                    for d in data_list:
+                        if 'link' in d: existing_data[d['link']] = d
+                break
+    except: pass
+
     # Extrair detalhes de cada procedimento
-    print("\nExtraindo detalhes de cada procedimento...")
+    print(f"\nExtraindo detalhes de {len(extracted_data)} procedimentos...")
     procedimentos_completos = []
     
-    for i, item in enumerate(extracted_data):
-        print(f"\nProcessando procedimento {i+1}/{len(extracted_data)}: {item['numero_procedimento']}")
-        
-        # Extrair detalhes do procedimento
-        details = fetch_procedure_details(item['link'])
-        
-        if details:
-            # Combinar dados básicos com detalhes
-            item_completo = {**item, **details}
-            procedimentos_completos.append(item_completo)
-            print(f"  ✓ Detalhes extraídos com sucesso")
-        else:
-            # Manter apenas dados básicos se não conseguir extrair detalhes
-            procedimentos_completos.append(item)
-            print(f"  ✗ Não foi possível extrair detalhes")
+    driver = setup_driver()
+    try:
+        for i, item in enumerate(extracted_data):
+            link = item.get('link')
+            print(f"\n[{i+1}/{len(extracted_data)}] {item['numero_procedimento']}")
+            
+            # Se já temos os detalhes, saltar
+            if link in existing_data and existing_data[link].get('detalhes_completos'):
+                print(f"  ⚡ Já existe na base de dados, ignorando fetch")
+                procedimentos_completos.append(existing_data[link])
+                continue
+
+            # Extrair detalhes do procedimento
+            details = fetch_procedure_details(driver, link)
+            
+            if details:
+                item_completo = {**item, **details}
+                procedimentos_completos.append(item_completo)
+                print(f"  ✓ Detalhes extraídos")
+            else:
+                procedimentos_completos.append(item)
+                print(f"  ✗ Falha na extração de detalhes")
+    finally:
+        if driver: driver.quit()
     
     # Salvar dados completos em JSON
     save_to_json(procedimentos_completos, "procedimentos_completos.json")
