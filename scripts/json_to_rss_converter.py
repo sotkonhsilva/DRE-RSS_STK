@@ -232,6 +232,8 @@ def main():
     """
     # Carregar dados do JSON
     possible_paths = [
+        'RSS/procedimentos_completos.json',
+        '../RSS/procedimentos_completos.json',
         'public/RSS/procedimentos_completos.json',
         '../public/RSS/procedimentos_completos.json',
         'procedimentos_completos.json'
@@ -276,30 +278,46 @@ def main():
     rss_content = create_rss_feed(procedimentos_processados)
     
     # Salvar feed RSS
-    # Tentar determinar a pasta public/RSS
-    rss_dir = 'public/RSS'
-    if not os.path.exists('public') and os.path.exists('../public'):
-        rss_dir = '../public/RSS'
+    # Tentar determinar as pastas de destino (Prioridade para ROOT/RSS para o GitHub Pages)
+    targets = []
     
-    output_file = os.path.join(rss_dir, 'feed_rss_procedimentos.xml')
-    try:
-        os.makedirs(rss_dir, exist_ok=True)
+    # Root paths
+    if os.path.exists('RSS') or os.path.exists('package.json'):
+        targets.append('RSS')
+    elif os.path.exists('../RSS') or os.path.exists('../package.json'):
+        targets.append('../RSS')
         
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(rss_content)
+    # Public paths (for local dev dev next.js)
+    if os.path.exists('public/RSS'):
+        if 'public/RSS' not in targets and '../public/RSS' not in targets:
+            targets.append('public/RSS')
+    elif os.path.exists('../public/RSS'):
+        if 'public/RSS' not in targets and '../public/RSS' not in targets:
+            targets.append('../public/RSS')
+
+    if not targets:
+        # Fallback para criar na raiz
+        targets = ['RSS']
+
+    for rss_dir in targets:
+        output_file = os.path.join(rss_dir, 'feed_rss_procedimentos.xml')
+        try:
+            os.makedirs(rss_dir, exist_ok=True)
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(rss_content)
+            print(f"✅ Feed RSS salvo em: {output_file}")
+        except Exception as e:
+            print(f"❌ Erro ao salvar em {rss_dir}: {e}")
         
-        print(f"Feed RSS criado com sucesso: {output_file}")
-        print(f"Total de procedimentos processados: {len(procedimentos_processados)}")
-        
-        # Estatísticas
-        print("\nEstatísticas:")
-        print(f"- Procedimentos com entidade: {len([p for p in procedimentos_processados if p.get('entidade') != 'N/A'])}")
-        print(f"- Procedimentos com NIPC: {len([p for p in procedimentos_processados if p.get('nipc') != 'N/A'])}")
-        print(f"- Procedimentos com preço: {len([p for p in procedimentos_processados if p.get('preco_base') != 'N/A'])}")
-        print(f"- Procedimentos com fundos EU: {len([p for p in procedimentos_processados if p.get('fundos_eu') and p.get('fundos_eu') != 'N/A'])}")
-        
-    except Exception as e:
-        print(f"❌ Erro ao salvar feed RSS: {e}")
+    print(f"\nFeed RSS criado com sucesso em {len(targets)} localizações.")
+    print(f"Total de procedimentos processados: {len(procedimentos_processados)}")
+    
+    # Estatísticas
+    print("\nEstatísticas:")
+    print(f"- Procedimentos com entidade: {len([p for p in procedimentos_processados if p.get('entidade') != 'N/A'])}")
+    print(f"- Procedimentos com NIPC: {len([p for p in procedimentos_processados if p.get('nipc') != 'N/A'])}")
+    print(f"- Procedimentos com preço: {len([p for p in procedimentos_processados if p.get('preco_base') != 'N/A'])}")
+    print(f"- Procedimentos com fundos EU: {len([p for p in procedimentos_processados if p.get('fundos_eu') and p.get('fundos_eu') != 'N/A'])}")
 
 if __name__ == "__main__":
     main() 

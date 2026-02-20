@@ -32,49 +32,35 @@ def is_procedure_active(procedure: Dict) -> bool:
     except:
         return False
 
+def get_all_data_dirs():
+    """
+    Retorna todos os caminhos possíveis para o diretório data/
+    """
+    current_dir = os.getcwd()
+    targets = []
+    
+    # Prioridade para Root data/ (para GitHub Pages)
+    root_paths = ['data', '../data']
+    for p in root_paths:
+        if os.path.exists(p) or os.path.exists(os.path.join(p, '..', 'package.json')):
+            if p not in targets: targets.append(p)
+            
+    # Public paths (para Next.js local)
+    public_paths = ['public/data', '../public/data']
+    for p in public_paths:
+        if os.path.exists(p):
+            if p not in targets: targets.append(p)
+            
+    if not targets:
+        targets = ['data']
+        
+    return targets
+
 def get_data_dir():
     """
-    Retorna o caminho correto para o diretório data/
+    Retorna o primeiro caminho encontrado para o diretório data/
     """
-    # Obter o diretório atual onde o script está sendo executado
-    current_dir = os.getcwd()
-    print(f"🔍 Diretório atual: {current_dir}")
-    
-    # Tentar diferentes caminhos possíveis baseados no diretório atual
-    possible_paths = []
-    
-    if 'scripts' in current_dir:
-        # Se estamos no diretório scripts/
-        possible_paths = [
-            '../public/data',  # DRE-RSS/public/data/
-            '../../DRE-RSS/public/data',
-        ]
-    elif 'DRE-RSS' in current_dir:
-        # Se estamos no diretório DRE-RSS/
-        possible_paths = [
-            'public/data',
-            './public/data',
-        ]
-    else:
-        # Se estamos no diretório BDRE/ ou outro
-        possible_paths = [
-            'DRE-RSS/public/data',
-            './DRE-RSS/public/data',
-            'public/data',
-            'data',
-        ]
-    
-    print(f"🔍 Testando caminhos: {possible_paths}")
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            print(f"✅ Caminho encontrado: {path}")
-            return path
-    
-    # Se nenhum funcionar, criar o diretório data no diretório atual
-    print(f"⚠️ Nenhum caminho encontrado, criando data/ no diretório atual")
-    os.makedirs('data', exist_ok=True)
-    return 'data'
+    return get_all_data_dirs()[0]
 
 def load_existing_ativos() -> List[Dict]:
     """
@@ -94,23 +80,23 @@ def load_existing_ativos() -> List[Dict]:
 
 def save_ativos(procedimentos_ativos: List[Dict]) -> str:
     """
-    Salva a lista de procedimentos ativos no arquivo ativos.json
+    Salva a lista de procedimentos ativos no arquivo ativos.json em todas as localizações encontradas
     """
-    try:
-        data_dir = get_data_dir()
-        # Garantir que o diretório data existe
-        os.makedirs(data_dir, exist_ok=True)
-        
-        ativos_file = os.path.join(data_dir, 'ativos.json')
-        
-        with open(ativos_file, 'w', encoding='utf-8') as f:
-            json.dump(procedimentos_ativos, f, ensure_ascii=False, indent=2)
-        
-        print(f"Arquivo ativos.json atualizado: {ativos_file}")
-        return ativos_file
-    except Exception as e:
-        print(f"Erro ao salvar ativos.json: {e}")
-        return None
+    targets = get_all_data_dirs()
+    last_file = ""
+    
+    for data_dir in targets:
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+            ativos_file = os.path.join(data_dir, 'ativos.json')
+            with open(ativos_file, 'w', encoding='utf-8') as f:
+                json.dump(procedimentos_ativos, f, ensure_ascii=False, indent=2)
+            print(f"✅ Arquivo ativos.json atualizado em: {ativos_file}")
+            last_file = ativos_file
+        except Exception as e:
+            print(f"❌ Erro ao salvar ativos.json em {data_dir}: {e}")
+            
+    return last_file
 
 def update_ativos_from_date_file(date_file_path: str) -> List[Dict]:
     """

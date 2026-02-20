@@ -54,4 +54,6 @@ jobs:
           git config --local user.name "GitHub Action"
           git add RSS/
           git add data/
+          git add public/RSS/ || true
+          git add public/data/ || true
           git diff --quiet && git diff --staged --quiet || (git commit -m "🔄 Atualizar feed RSS DRE e procedimentos ativos - $(date +'%Y-%m-%d %H:%M:%S')" && git push)

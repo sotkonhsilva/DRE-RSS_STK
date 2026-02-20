@@ -10,25 +10,33 @@ from datetime import datetime
 from typing import List, Dict, Optional
 
 class SeedManager:
-    def __init__(self, data_dir: str = None):
-        if data_dir is None:
-            # Tentar encontrar a pasta public/data
-            if os.path.exists("../public/data"):
-                self.data_dir = "../public/data"
-            elif os.path.exists("public/data"):
-                self.data_dir = "public/data"
-            else:
-                self.data_dir = "data"
-        else:
-            self.data_dir = data_dir
-        
+    def __init__(self):
+        self.targets = []
+        # Prioritize root for production/GitHub Pages
+        if os.path.exists('data') or os.path.exists('package.json'):
+            self.targets.append('data')
+        elif os.path.exists('../data') or os.path.exists('../package.json'):
+            self.targets.append('../data')
+            
+        # Also include public for local dev
+        if os.path.exists('public/data'):
+            if 'public/data' not in self.targets: self.targets.append('public/data')
+        elif os.path.exists('../public/data'):
+            if '../public/data' not in self.targets: self.targets.append('../public/data')
+            
+        if not self.targets:
+            self.targets = ['data']
+            
+        # Principal directory for loading
+        self.data_dir = self.targets[0]
         self.seeds_file = os.path.join(self.data_dir, "seeds.json")
-        self.ensure_data_dir()
+        self.ensure_dirs()
     
-    def ensure_data_dir(self):
-        """Garantir que o diretório data existe"""
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
+    def ensure_dirs(self):
+        """Garantir que os diretórios existem"""
+        for d in self.targets:
+            if not os.path.exists(d):
+                os.makedirs(d, exist_ok=True)
     
     def load_seeds(self) -> List[Dict]:
         """Carregar seeds do ficheiro JSON"""
@@ -42,9 +50,15 @@ class SeedManager:
             return []
     
     def save_seeds(self, seeds: List[Dict]):
-        """Guardar seeds no ficheiro JSON"""
-        with open(self.seeds_file, 'w', encoding='utf-8') as f:
-            json.dump(seeds, f, indent=2, ensure_ascii=False)
+        """Guardar seeds no ficheiro JSON em todos os destinos"""
+        for d in self.targets:
+            path = os.path.join(d, "seeds.json")
+            try:
+                with open(path, 'w', encoding='utf-8') as f:
+                    json.dump(seeds, f, indent=2, ensure_ascii=False)
+                print(f"✅ Seeds guardadas em {path}")
+            except Exception as e:
+                print(f"❌ Erro ao guardar seeds em {d}: {e}")
     
     def add_seed(self, code: str, tags: List[str], district: str = None, name: str = None) -> bool:
         """Adicionar uma nova seed"""

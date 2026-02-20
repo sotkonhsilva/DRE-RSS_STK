@@ -11,9 +11,10 @@ def load_seeds() -> List[Dict]:
     """Carrega as seeds do arquivo JSON"""
     # Tentar encontrar a pasta de dados
     possible_paths = [
+        'data/seeds.json',
+        '../data/seeds.json',
         'public/data/seeds.json',
         '../public/data/seeds.json',
-        'data/seeds.json',
         'seeds.json'
     ]
     
@@ -76,9 +77,10 @@ def generate_filtered_rss():
     
     # Tentar encontrar a pasta de dados
     possible_paths = [
+        'data/ativos.json',
+        '../data/ativos.json',
         'public/data/ativos.json',
         '../public/data/ativos.json',
-        'data/ativos.json',
         'ativos.json'
     ]
     
@@ -230,18 +232,35 @@ def generate_filtered_rss():
         reconstructed = reconstructed.replace(f"DESCRIPTION_CDATA_PLACEHOLDER_{i}", f"<![CDATA[{desc_html}]]>")
 
     # Salvar o arquivo
-    # Tentar determinar a pasta public/RSS
-    rss_dir = 'public/RSS'
-    if not os.path.exists('public') and os.path.exists('../public'):
-        rss_dir = '../public/RSS'
-        
-    output_path = os.path.join(rss_dir, "feed_filtros_seeds.xml")
-    os.makedirs(rss_dir, exist_ok=True)
+    # Tentar determinar as pastas de destino
+    targets = []
     
-    with open(output_path, 'w', encoding='utf-8') as f:
-        # Remover declaração xml duplicada se o minidom adicionar uma que não gostamos
-        # reparsed.toxml já adiciona <?xml version="1.0" encoding="UTF-8"?>
-        f.write(reconstructed)
+    # Root paths
+    if os.path.exists('RSS') or os.path.exists('package.json'):
+        targets.append('RSS')
+    elif os.path.exists('../RSS') or os.path.exists('../package.json'):
+        targets.append('../RSS')
+        
+    # Public paths
+    if os.path.exists('public/RSS'):
+        if 'public/RSS' not in targets and '../public/RSS' not in targets:
+            targets.append('public/RSS')
+    elif os.path.exists('../public/RSS'):
+        if 'public/RSS' not in targets and '../public/RSS' not in targets:
+            targets.append('../public/RSS')
+
+    if not targets:
+        targets = ['RSS']
+
+    for rss_dir in targets:
+        output_path = os.path.join(rss_dir, "feed_filtros_seeds.xml")
+        try:
+            os.makedirs(rss_dir, exist_ok=True)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(reconstructed)
+            print(f"✅ Feed filtrado salvo em: {output_path}")
+        except Exception as e:
+            print(f"❌ Erro ao salvar em {rss_dir}: {e}")
         
     print(f"✅ RSS filtrado gerado em: {output_path} ({len(filtered_items)} itens)")
 

@@ -211,23 +211,28 @@ def parse_rss_to_json(xml_content: str) -> List[Dict[str, str]]:
 
 def save_to_json(data: List[Dict[str, str]], filename: str = "procedimentos_dre.json"):
     """
-    Salva os dados extraídos em formato JSON
+    Salva os dados extraídos em formato JSON em todas as localizações encontradas
     """
-    try:
-        # Tentar determinar a pasta public/RSS
-        rss_dir = 'public/RSS'
-        if not os.path.exists('public') and os.path.exists('../public'):
-            rss_dir = '../public/RSS'
-            
-        # Garantir que o diretório RSS existe
-        os.makedirs(rss_dir, exist_ok=True)
-        
-        filepath = os.path.join(rss_dir, filename)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Dados salvos com sucesso em {filepath}")
-    except Exception as e:
-        print(f"Erro ao salvar arquivo JSON: {e}")
+    targets = []
+    # Root RSS
+    if os.path.exists('RSS') or os.path.exists('package.json'): targets.append('RSS')
+    elif os.path.exists('../RSS') or os.path.exists('../package.json'): targets.append('../RSS')
+    
+    # Public RSS
+    if os.path.exists('public/RSS'): targets.append('public/RSS')
+    elif os.path.exists('../public/RSS'): targets.append('../public/RSS')
+    
+    if not targets: targets = ['RSS']
+    
+    for rss_dir in targets:
+        try:
+            os.makedirs(rss_dir, exist_ok=True)
+            filepath = os.path.join(rss_dir, filename)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            print(f"✅ Dados salvos em {filepath}")
+        except Exception as e:
+            print(f"❌ Erro ao salvar em {rss_dir}: {e}")
 
 def save_to_json_with_date(data: List[Dict[str, str]]):
     """
@@ -235,26 +240,36 @@ def save_to_json_with_date(data: List[Dict[str, str]]):
     """
     try:
         from datetime import datetime
-        
-        # Tentar determinar a pasta public/data
-        data_dir = 'public/data'
-        if not os.path.exists('public') and os.path.exists('../public'):
-            data_dir = '../public/data'
-            
-        # Garantir que o diretório data existe
-        os.makedirs(data_dir, exist_ok=True)
-        
         # Obter data atual no formato DD-MM-YYYY
         current_date = datetime.now().strftime('%d-%m-%Y')
         filename = f"{current_date}.json"
         
-        filepath = os.path.join(data_dir, filename)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"Dados salvos com sucesso em {filepath}")
-        return filepath
+        targets = []
+        # Root data
+        if os.path.exists('data') or os.path.exists('package.json'): targets.append('data')
+        elif os.path.exists('../data') or os.path.exists('../package.json'): targets.append('../data')
+        
+        # Public data
+        if os.path.exists('public/data'): targets.append('public/data')
+        elif os.path.exists('../public/data'): targets.append('../public/data')
+        
+        if not targets: targets = ['data']
+        
+        last_path = None
+        for data_dir in targets:
+            try:
+                os.makedirs(data_dir, exist_ok=True)
+                filepath = os.path.join(data_dir, filename)
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                print(f"✅ Dados salvos com data em {filepath}")
+                last_path = filepath
+            except Exception as e:
+                print(f"❌ Erro ao salvar em {data_dir}: {e}")
+                
+        return last_path
     except Exception as e:
-        print(f"Erro ao salvar arquivo JSON com data: {e}")
+        print(f"❌ Erro ao processar save_to_json_with_date: {e}")
         return None
 
 def main():
