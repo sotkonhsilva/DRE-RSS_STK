@@ -4,6 +4,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import List, Dict
 import html
+import re
+from xml.dom import minidom
 
 def load_seeds() -> List[Dict]:
     """Carrega as seeds do arquivo JSON"""
@@ -79,53 +81,85 @@ def generate_filtered_rss():
                 filtered_items.append(item)
                 break
 
-    # Criar estrutura XML do RSS
-    rss = ET.Element("rss", version="2.0")
-    channel = ET.SubElement(rss, "channel")
+    # Criar elemento raiz do RSS
+    ET.register_namespace('atom', 'http://www.w3.org/2005/Atom')
+    rss = ET.Element('rss', version='2.0')
+    
+    # Criar canal
+    channel = ET.SubElement(rss, 'channel')
     
     ET.SubElement(channel, "title").text = "DRE Procedimentos Filtrados (Seeds)"
-    ET.SubElement(channel, "link").text = "https://github.com/sotkonhsilva/DRE-RSS_STK"
+    ET.SubElement(channel, "link").text = "https://sotkonhsilva.github.io/DRE-RSS_STK/"
     ET.SubElement(channel, "description").text = "Feed RSS automatizado com base nas sementes de pesquisa parametrizadas."
     ET.SubElement(channel, "language").text = "pt-PT"
     ET.SubElement(channel, "lastBuildDate").text = datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
 
-    for item in filtered_items:
+    # Adicionar tag do gerador
+    ET.SubElement(channel, "generator").text = "Antigravity RSS Generator 1.0"
+
+    # Link atom para auto-descoberta
+    atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
+    atom_link.set('href', 'https://sotkonhsilva.github.io/DRE-RSS_STK/RSS/feed_filtros_seeds.xml')
+    atom_link.set('rel', 'self')
+    atom_link.set('type', 'application/rss+xml')
+
+    for i, item in enumerate(filtered_items):
         rss_item = ET.SubElement(channel, "item")
         
-        nipc = item.get('nipc', 'N/A')
-        entidade = item.get('entidade_adjudicante', item.get('entidade', 'N/A'))
-        designacao = item.get('descricao') or item.get('designacao_contrato') or "Procedimento sem título"
-        matched_seed = item.get('matched_seed', 'SEED')
+        nipc = str(item.get('nipc', 'N/A')).strip()
+        entidade = str(item.get('entidade_adjudicante', item.get('entidade', 'N/A'))).strip()
+        designacao = str(item.get('descricao') or item.get('designacao_contrato') or "Procedimento sem título").strip()
+        matched_seed = str(item.get('matched_seed', 'SEED')).strip()
         
-        ET.SubElement(rss_item, "title").text = f"[{matched_seed}] [{nipc}] {entidade} - {designacao}"
+        # Escapar e limpar texto básico
+        def clean_text(t):
+            t = str(t)
+            # Remover caracteres de controle
+            t = "".join(ch for ch in t if ord(ch) >= 32 or ch in "\n\r\t")
+            return t
+
+        title_text = clean_text(f"[{matched_seed}] [{nipc}] {entidade} - {designacao}")
+        ET.SubElement(rss_item, "title").text = title_text
         
         link = clean_url(item.get('link', ''))
         ET.SubElement(rss_item, "link").text = link
         
-        # Placeholder para descrição que será substituído por CDATA
-        ET.SubElement(rss_item, "description").text = "DESCRIPTION_CDATA_PLACEHOLDER"
-        
-        ET.SubElement(rss_item, "guid", isPermaLink="false").text = link
+        # pubDate é CRITICO para Outlook
+        pub_date_elem = ET.SubElement(rss_item, "pubDate")
+        detalhes = item.get('detalhes_completos', '')
+        envio_match = re.search(r'Data de Envio do Anúncio:\s*(\d{2}-\d{2}-\d{4})', detalhes)
+        if envio_match:
+            try:
+                dt = datetime.strptime(envio_match.group(1), '%d-%m-%Y')
+                pub_date_elem.text = dt.strftime("%a, %d %b %Y 00:00:00 GMT")
+            except:
+                pub_date_elem.text = datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
+        else:
+            pub_date_elem.text = datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
 
-    # Gerar XML final com substituição manual de CDATA para melhor compatibilidade com Outlook
-    xml_str = ET.tostring(rss, encoding='utf-8').decode('utf-8')
-    
-    # Adicionar cabeçalho XML
-    final_xml = '<?xml version="1.0" encoding="utf-8" ?>\n' + xml_str
+        # Placeholder para descrição
+        ET.SubElement(rss_item, "description").text = f"DESCRIPTION_CDATA_PLACEHOLDER_{i}"
+        
+        # GUID único (adiciona índice para evitar duplicatas se o link for igual)
+        guid = ET.SubElement(rss_item, "guid", isPermaLink="false")
+        guid.text = f"{link}#{i}"
+
+    # Gerar XML com minidom para formatação limpa
+    rough_string = ET.tostring(rss, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    xml_str = reparsed.toxml(encoding='UTF-8').decode('utf-8')
     
     # Processar CDATAs
-    parts = final_xml.split("DESCRIPTION_CDATA_PLACEHOLDER")
-    reconstructed = parts[0]
-    
+    reconstructed = xml_str
     for i, item in enumerate(filtered_items):
         nipc = item.get('nipc', 'N/A')
         entidade = item.get('entidade_adjudicante', item.get('entidade', 'N/A'))
         designacao = item.get('descricao') or item.get('designacao_contrato') or "Procedimento sem título"
         matched_seed = item.get('matched_seed', 'SEED')
-        pub_date_val = item.get('data_publicacao', datetime.now().strftime('%d/%m/%Y'))
-        deadline_val = item.get('prazo_apresentacao_propostas', 'N/A')
         price_val = item.get('preco_base', 'N/A')
         plataforma = item.get('plataforma_eletronica', 'N/A')
+        concelho = item.get('concelho', 'N/A')
+        prazo = item.get('prazo_execucao', 'N/A')
         
         c_link = clean_url(item.get('link', ''))
         c_url_proc = clean_url(item.get('url_procedimento', ''))
@@ -145,11 +179,11 @@ def generate_filtered_rss():
             <td width="33%" valign="top" style="background:#ffffff; padding:10px; border:1px solid #d1d9e6; border-radius:8px;">
                 <h4 style="color:#2a5298; margin:0 0 10px 0; font-size:12px;">ENTIDADE</h4>
                 <div style="font-size:11px;">NIPC: <b>{nipc}</b></div>
-                <div style="font-size:11px;">CONCELHO: {item.get('concelho', 'N/A')}</div>
+                <div style="font-size:11px;">CONCELHO: {concelho}</div>
             </td>
             <td width="33%" valign="top" style="background:#ffffff; padding:10px; border:1px solid #d1d9e6; border-radius:8px;">
                 <h4 style="color:#2a5298; margin:0 0 10px 0; font-size:12px;">CONTRATO</h4>
-                <div style="font-size:11px;">PRAZO: {item.get('prazo_execucao', 'N/A')}</div>
+                <div style="font-size:11px;">PRAZO: {prazo}</div>
                 <div style="font-size:11px;">PREÇO: <b>{price_val}</b></div>
             </td>
             <td width="33%" valign="top" style="background:#ffffff; padding:10px; border:1px solid #d1d9e6; border-radius:8px;">
@@ -164,13 +198,15 @@ def generate_filtered_rss():
     </div>
 </div>
 """.strip()
-        reconstructed += f"<![CDATA[{desc_html}]]>" + parts[i+1]
+        reconstructed = reconstructed.replace(f"DESCRIPTION_CDATA_PLACEHOLDER_{i}", f"<![CDATA[{desc_html}]]>")
 
     # Salvar o arquivo
     output_path = os.path.join("..", "public", "RSS", "feed_filtros_seeds.xml")
     os.makedirs(os.path.join("..", "public", "RSS"), exist_ok=True)
     
     with open(output_path, 'w', encoding='utf-8') as f:
+        # Remover declaração xml duplicada se o minidom adicionar uma que não gostamos
+        # reparsed.toxml já adiciona <?xml version="1.0" encoding="UTF-8"?>
         f.write(reconstructed)
         
     print(f"✅ RSS filtrado gerado em: {output_path} ({len(filtered_items)} itens)")

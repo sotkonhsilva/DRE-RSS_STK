@@ -114,8 +114,8 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     Cria um feed RSS a partir dos procedimentos processados
     """
     # Criar elemento raiz do RSS
+    ET.register_namespace('atom', 'http://www.w3.org/2005/Atom')
     rss = ET.Element('rss', version='2.0')
-    rss.set('xmlns:atom', 'http://www.w3.org/2005/Atom')
     
     # Criar canal
     channel = ET.SubElement(rss, 'channel')
@@ -129,6 +129,9 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     
     link = ET.SubElement(channel, 'link')
     link.text = 'https://sotkonhsilva.github.io/DRE-RSS_STK/'
+    
+    # Adicionar tag do gerador
+    ET.SubElement(channel, "generator").text = "Antigravity RSS Generator 1.0"
     
     # Link atom para auto-descoberta
     atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
@@ -146,9 +149,9 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     for i, proc in enumerate(procedimentos):
         item = ET.SubElement(channel, 'item')
         
-        nipc = proc.get('nipc', 'N/A')
-        entidade = proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))
-        designacao = proc.get('designacao_contrato', proc.get('descricao', 'N/A'))
+        nipc = str(proc.get('nipc', 'N/A')).strip()
+        entidade = str(proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))).strip()
+        designacao = str(proc.get('designacao_contrato', proc.get('descricao', 'N/A'))).strip()
         if designacao == 'N/A' or not designacao:
             designacao = "Procedimento sem título"
             
@@ -158,30 +161,39 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
         c_link = clean_url(proc.get('link', ''))
         ET.SubElement(item, 'link').text = c_link
         
+        # GUID único
         guid = ET.SubElement(item, 'guid')
-        guid.text = c_link
+        guid.text = f"{c_link}#{i}"
         guid.set('isPermaLink', 'false')
         
         pub_date_item = ET.SubElement(item, 'pubDate')
-        pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        detalhes = proc.get('detalhes_completos', '')
+        envio_match = re.search(r'Data de Envio do Anúncio:\s*(\d{2}-\d{2}-\d{4})', detalhes)
+        if envio_match:
+            try:
+                dt = datetime.strptime(envio_match.group(1), '%d-%m-%Y')
+                pub_date_item.text = dt.strftime("%a, %d %b %Y 00:00:00 GMT")
+            except:
+                pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        else:
+            pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
         
         # Placeholder
         item_description = ET.SubElement(item, 'description')
-        item_description.text = "DESCRIPTION_CDATA_PLACEHOLDER"
+        item_description.text = f"DESCRIPTION_CDATA_PLACEHOLDER_{i}"
         
-    # Converter para string XML formatada
-    xml_str = ET.tostring(rss, encoding='utf-8').decode('utf-8')
-    final_xml = '<?xml version="1.0" encoding="utf-8" ?>\n' + xml_str
+    # Converter para string XML formatada usando minidom
+    rough_string = ET.tostring(rss, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    xml_str = reparsed.toxml(encoding='UTF-8').decode('utf-8')
     
-    parts = final_xml.split("DESCRIPTION_CDATA_PLACEHOLDER")
-    reconstructed = parts[0]
+    # Processar CDATAs
+    reconstructed = xml_str
     
     for i, proc in enumerate(procedimentos):
         nipc = proc.get('nipc', 'N/A')
         entidade = proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))
         designacao = proc.get('designacao_contrato', proc.get('descricao', 'N/A'))
-        pub_date_val = proc.get('data_publicacao', datetime.now().strftime('%d/%m/%Y'))
-        deadline_val = proc.get('prazo_apresentacao_propostas', 'N/A')
         price_val = proc.get('preco_base', 'N/A')
         plataforma = proc.get('plataforma_eletronica', 'N/A')
         c_link = clean_url(proc.get('link', ''))
@@ -208,7 +220,7 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     </table>
 </div>
 """.strip()
-        reconstructed += f"<![CDATA[{desc_html}]]>" + parts[i+1]
+        reconstructed = reconstructed.replace(f"DESCRIPTION_CDATA_PLACEHOLDER_{i}", f"<![CDATA[{desc_html}]]>")
 
     return reconstructed
 
