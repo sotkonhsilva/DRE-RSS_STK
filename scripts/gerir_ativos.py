@@ -46,21 +46,22 @@ def get_data_dir():
     if 'scripts' in current_dir:
         # Se estamos no diretório scripts/
         possible_paths = [
-            '../data',  # DRE-RSS/data/
-            '../../DRE-RSS/data',  # BDRE/DRE-RSS/data/
+            '../public/data',  # DRE-RSS/public/data/
+            '../../DRE-RSS/public/data',
         ]
     elif 'DRE-RSS' in current_dir:
         # Se estamos no diretório DRE-RSS/
         possible_paths = [
-            'data',  # DRE-RSS/data/
-            './data',  # DRE-RSS/data/
+            'public/data',
+            './public/data',
         ]
     else:
         # Se estamos no diretório BDRE/ ou outro
         possible_paths = [
-            'DRE-RSS/data',  # BDRE/DRE-RSS/data/
-            './DRE-RSS/data',  # BDRE/DRE-RSS/data/
-            'data',  # BDRE/data/
+            'DRE-RSS/public/data',
+            './DRE-RSS/public/data',
+            'public/data',
+            'data',
         ]
     
     print(f"🔍 Testando caminhos: {possible_paths}")

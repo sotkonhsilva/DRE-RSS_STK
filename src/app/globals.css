@@ -1,0 +1,214 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --background: #050505;
+    --foreground: #ffffff;
+    --accent: #eab308;
+    /* Golden/Yellow from image */
+    --header-text: #666666;
+    --row-hover: #111111;
+    --border: #1a1a1a;
+    --card-bg: #0a0a0a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.dashboard-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.section-title {
+    color: var(--header-text);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.main-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    color: var(--header-text);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table th span.sort-icon {
+    margin-left: 4px;
+    font-size: 0.8rem;
+    opacity: 0.5;
+}
+
+.data-table td {
+    padding: 1rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+    color: #cccccc;
+}
+
+.data-table tr:hover td {
+    background: var(--row-hover);
+}
+
+.primary-text {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.accent-text {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.numeric-cell {
+    font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+}
+
+/* Custom styles for the search section to match the pro look */
+.pro-search-section {
+    background: #000000;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.pro-input {
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.pro-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.pro-btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.pro-btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.pro-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--header-text);
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.pro-btn-secondary:hover {
+    background: var(--border);
+    color: white;
+}
+
+.expand-row-btn {
+    background: transparent;
+    border: none;
+    color: var(--header-text);
+    cursor: pointer;
+}
+
+.expand-row-btn:hover {
+    color: var(--accent);
+}
+
+.details-panel {
+    background: #020202;
+    padding: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-subgroup {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.detail-title {
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #222;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #333;
+}

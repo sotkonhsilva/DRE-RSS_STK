@@ -215,9 +215,9 @@ def save_to_json(data: List[Dict[str, str]], filename: str = "procedimentos_dre.
     """
     try:
         # Garantir que o diretório RSS existe
-        os.makedirs('../RSS', exist_ok=True)
+        os.makedirs('../public/RSS', exist_ok=True)
         
-        filepath = os.path.join('../RSS', filename)
+        filepath = os.path.join('../public/RSS', filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"Dados salvos com sucesso em {filepath}")
@@ -232,13 +232,13 @@ def save_to_json_with_date(data: List[Dict[str, str]]):
         from datetime import datetime
         
         # Garantir que o diretório data existe
-        os.makedirs('../data', exist_ok=True)
+        os.makedirs('../public/data', exist_ok=True)
         
         # Obter data atual no formato DD-MM-YYYY
         current_date = datetime.now().strftime('%d-%m-%Y')
         filename = f"{current_date}.json"
         
-        filepath = os.path.join('../data', filename)
+        filepath = os.path.join('../public/data', filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"Dados salvos com sucesso em {filepath}")
@@ -343,7 +343,7 @@ def main():
                               capture_output=True, text=True, check=True)
         
         print("✅ Feed RSS gerado com sucesso!")
-        print("📄 Arquivo criado: ../RSS/feed_rss_procedimentos.xml")
+        print("📄 Arquivo criado: ../public/RSS/feed_rss_procedimentos.xml")
         
         # Mostrar estatísticas do feed RSS
         if "Total de procedimentos processados:" in result.stdout:
@@ -370,13 +370,13 @@ def main():
     print(f"\n🎉 Processo completo finalizado!")
     print(f"Procedimentos processados: {len(procedimentos_completos)}")
     print(f"📁 Arquivos gerados:")
-    print(f"  - ../RSS/procedimentos_basicos.json (dados do RSS)")
-    print(f"  - ../RSS/procedimentos_completos.json (dados + detalhes)")
+    print(f"  - ../public/RSS/procedimentos_basicos.json (dados do RSS)")
+    print(f"  - ../public/RSS/procedimentos_completos.json (dados + detalhes)")
     if data_file_path:
         print(f"  - {data_file_path} (dados completos com data)")
-    print(f"  - ../data/ativos.json (procedimentos ativos)")
-    print(f"  - ../RSS/feed_rss_procedimentos.xml (feed RSS completo)")
-    print(f"  - ../RSS/feed_filtros_seeds.xml (feed RSS filtrado por SEEDS)")
+    print(f"  - ../public/data/ativos.json (procedimentos ativos)")
+    print(f"  - ../public/RSS/feed_rss_procedimentos.xml (feed RSS completo)")
+    print(f"  - ../public/RSS/feed_filtros_seeds.xml (feed RSS filtrado por SEEDS)")
 
 if __name__ == "__main__":
     main() 

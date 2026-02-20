@@ -26,6 +26,7 @@ def extract_field_from_details(details_text: str, field_name: str) -> Optional[s
         'fundos_eu': r'Têm fundos EU\?\s*(.+?)(?:\n|$)',
         'plataforma_eletronica': r'Plataforma eletrónica utilizada pela entidade adjudicante:\s*(.+?)(?:\n|$)',
         'url_procedimento': r'URL para Apresentação:\s*(.+?)(?:\n|$)',
+        'numero_procedimento': r'Número de referência interna:\s*(.+?)(?:\n|$)',
         'autor_nome': r'28 - IDENTIFICAÇÃO DO\(S\) AUTOR\(ES\) DE ANÚNCIO\nNome:\s*(.+?)(?:\n|$)',
         'autor_cargo': r'Cargo:\s*(.+?)(?:\n|$)'
     }
@@ -45,6 +46,12 @@ def extract_field_from_details(details_text: str, field_name: str) -> Optional[s
         return value
     
     return None
+
+def clean_url(url: str) -> str:
+    """Limpa URLs de brancos e quebras de linha que invalidam o RSS"""
+    if not url: return "https://diariodarepublica.pt"
+    return str(url).strip().replace('\n', '').replace('\r', '').replace(' ', '%20')
+
 
 def parse_procedimento(proc: Dict) -> Dict:
     """
@@ -88,7 +95,7 @@ def parse_procedimento(proc: Dict) -> Dict:
         'entidade_adjudicante', 'nipc', 'distrito', 'concelho', 'freguesia',
         'site', 'email', 'designacao_contrato', 'descricao', 'preco_base',
         'prazo_execucao', 'prazo_apresentacao_propostas', 'fundos_eu', 'plataforma_eletronica', 'url_procedimento',
-        'autor_nome', 'autor_cargo'
+        'autor_nome', 'autor_cargo', 'numero_procedimento'
     ]
     
     for field in fields:
@@ -125,7 +132,7 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     
     # Link atom para auto-descoberta
     atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
-    atom_link.set('href', 'https://sotkonhsilva.github.io/DRE-RSS_STK/feed_rss_procedimentos.xml')
+    atom_link.set('href', 'https://sotkonhsilva.github.io/DRE-RSS_STK/RSS/feed_rss_procedimentos.xml')
     atom_link.set('rel', 'self')
     atom_link.set('type', 'application/rss+xml')
     
@@ -133,67 +140,85 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     language.text = 'pt-PT'
     
     pub_date = ET.SubElement(channel, 'lastBuildDate')
-    pub_date.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+    pub_date.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
     
     # Adicionar cada procedimento como item
     for i, proc in enumerate(procedimentos):
         item = ET.SubElement(channel, 'item')
         
-        # Título do item
+        nipc = proc.get('nipc', 'N/A')
+        entidade = proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))
+        designacao = proc.get('designacao_contrato', proc.get('descricao', 'N/A'))
+        if designacao == 'N/A' or not designacao:
+            designacao = "Procedimento sem título"
+            
         item_title = ET.SubElement(item, 'title')
-        item_title.text = f"Procedimento {i+1}: {proc.get('designacao_contrato', proc.get('entidade', 'N/A'))}"
+        item_title.text = f"[{nipc}] {entidade} - {designacao}"
         
-        # Link do item
-        item_link = ET.SubElement(item, 'link')
-        item_link.text = proc.get('link', '')
+        c_link = clean_url(proc.get('link', ''))
+        ET.SubElement(item, 'link').text = c_link
         
-        # GUID
         guid = ET.SubElement(item, 'guid')
-        guid.text = proc.get('link', f"proc_{proc.get('numero_procedimento', i)}")
-        guid.set('isPermaLink', 'true')
+        guid.text = c_link
+        guid.set('isPermaLink', 'false')
         
-        # Data de publicação (usar data atual)
         pub_date_item = ET.SubElement(item, 'pubDate')
-        pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+        pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
         
-        # Descrição detalhada - apenas as informações específicas pedidas
-        description_text = f"""
-        <h3>Informações do Procedimento</h3>
-        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-            <tr><td><strong>Entidade Adjudicante:</strong></td><td>{proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))}</td></tr>
-            <tr><td><strong>NIPC:</strong></td><td>{proc.get('nipc', 'N/A')}</td></tr>
-            <tr><td><strong>Distrito:</strong></td><td>{proc.get('distrito', 'N/A')}</td></tr>
-            <tr><td><strong>Concelho:</strong></td><td>{proc.get('concelho', 'N/A')}</td></tr>
-            <tr><td><strong>Freguesia:</strong></td><td>{proc.get('freguesia', 'N/A')}</td></tr>
-            <tr><td><strong>Site:</strong></td><td><a href="{proc.get('site', '')}">{proc.get('site', 'N/A')}</a></td></tr>
-            <tr><td><strong>E-mail:</strong></td><td><a href="mailto:{proc.get('email', '')}">{proc.get('email', 'N/A')}</a></td></tr>
-            <tr><td><strong>Designação do contrato:</strong></td><td>{proc.get('designacao_contrato', 'N/A')}</td></tr>
-            <tr><td><strong>Descrição:</strong></td><td>{proc.get('descricao', 'N/A')}</td></tr>
-            <tr><td><strong>Preço base s/IVA:</strong></td><td>{proc.get('preco_base', 'N/A')}</td></tr>
-            <tr><td><strong>Prazo de execução:</strong></td><td>{proc.get('prazo_execucao', 'N/A')}</td></tr>
-            <tr><td><strong>Prazo para apresentação das propostas:</strong></td><td>{proc.get('prazo_apresentacao_propostas', 'N/A')}</td></tr>
-            <tr><td><strong>Tem fundos EU:</strong></td><td>{proc.get('fundos_eu', 'N/A')}</td></tr>
-            <tr><td><strong>Plataforma eletrónica:</strong></td><td>{proc.get('plataforma_eletronica', 'N/A')}</td></tr>
-            <tr><td><strong>URL procedimento:</strong></td><td><a href="{proc.get('url_procedimento', '')}">{proc.get('url_procedimento', 'N/A')}</a></td></tr>
-            <tr><td><strong>Autor do anúncio - Nome:</strong></td><td>{proc.get('autor_nome', 'N/A')}</td></tr>
-            <tr><td><strong>Autor do anúncio - Cargo:</strong></td><td>{proc.get('autor_cargo', 'N/A')}</td></tr>
-        </table>
-        """
-        
+        # Placeholder
         item_description = ET.SubElement(item, 'description')
-        item_description.text = description_text
-    
+        item_description.text = "DESCRIPTION_CDATA_PLACEHOLDER"
+        
     # Converter para string XML formatada
-    rough_string = ET.tostring(rss, encoding='unicode')
-    reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="  ")
+    xml_str = ET.tostring(rss, encoding='utf-8').decode('utf-8')
+    final_xml = '<?xml version="1.0" encoding="utf-8" ?>\n' + xml_str
+    
+    parts = final_xml.split("DESCRIPTION_CDATA_PLACEHOLDER")
+    reconstructed = parts[0]
+    
+    for i, proc in enumerate(procedimentos):
+        nipc = proc.get('nipc', 'N/A')
+        entidade = proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))
+        designacao = proc.get('designacao_contrato', proc.get('descricao', 'N/A'))
+        pub_date_val = proc.get('data_publicacao', datetime.now().strftime('%d/%m/%Y'))
+        deadline_val = proc.get('prazo_apresentacao_propostas', 'N/A')
+        price_val = proc.get('preco_base', 'N/A')
+        plataforma = proc.get('plataforma_eletronica', 'N/A')
+        c_link = clean_url(proc.get('link', ''))
+        c_url_proc = clean_url(proc.get('url_procedimento', ''))
+        
+        desc_html = f"""
+<div style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 15px; border: 1px solid #e0e6ed; border-radius: 8px;">
+    <div style="background-color: #ffffff; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2a5298;">
+        <div style="font-size: 11px; color: #2a5298; font-weight: bold; text-transform: uppercase;">{entidade}</div>
+        <div style="font-size: 15px; font-weight: bold; color: #1e293b; margin: 4px 0;">{designacao}</div>
+        <div style="font-size: 10px; color: #64748b;"><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">PLATAFORMA: {plataforma}</span></div>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="5" border="0">
+        <tr>
+            <td width="50%" valign="top" style="background:#ffffff; padding:10px; border:1px solid #d1d9e6; border-radius:8px;">
+                <div style="font-size:11px;">NIPC: <b>{nipc}</b></div>
+                <div style="font-size:11px;">PREÇO: <b>{price_val}</b></div>
+            </td>
+            <td width="50%" valign="top" style="background:#ffffff; padding:10px; border:1px solid #d1d9e6; border-radius:8px;">
+                <div style="font-size:11px;"><a href="{c_link}">Anúncio DRE</a></div>
+                <div style="font-size:11px;"><a href="{c_url_proc}">Procedimento</a></div>
+            </td>
+        </tr>
+    </table>
+</div>
+""".strip()
+        reconstructed += f"<![CDATA[{desc_html}]]>" + parts[i+1]
+
+    return reconstructed
+
 
 def main():
     """
     Função principal
     """
     # Carregar dados do JSON
-    json_file = '../RSS/procedimentos_completos.json'
+    json_file = '../public/RSS/procedimentos_completos.json'
     
     if not os.path.exists(json_file):
         print(f"❌ Arquivo {json_file} não encontrado!")
@@ -227,10 +252,9 @@ def main():
     rss_content = create_rss_feed(procedimentos_processados)
     
     # Salvar feed RSS
-    output_file = '../RSS/feed_rss_procedimentos.xml'
+    output_file = '../public/RSS/feed_rss_procedimentos.xml'
     try:
-        # Garantir que o diretório existe
-        os.makedirs('../RSS', exist_ok=True)
+        os.makedirs('../public/RSS', exist_ok=True)
         
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(rss_content)
