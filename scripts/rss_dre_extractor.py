@@ -38,17 +38,16 @@ def setup_driver():
     Configura e retorna o driver do Chrome usando webdriver-manager para baixar a versão correta
     """
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Executar sem interface gráfica
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--disable-web-security")
-    chrome_options.add_argument("--allow-running-insecure-content")
-    chrome_options.add_argument("--disable-features=VizDisplayCompositor")
     chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-plugins")
     chrome_options.add_argument("--disable-images")
+    chrome_options.add_argument("--log-level=3")
+    chrome_options.add_argument("--silent")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36")
  
     
     # Usar webdriver-manager para baixar a versão correta do Chrome WebDriver

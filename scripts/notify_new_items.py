@@ -14,15 +14,22 @@ SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
 EMAIL_RECEIVER = os.environ.get("EMAIL_RECEIVER", "jhsilva@sotkon.com")
 
 def load_seeds() -> List[Dict]:
-    """Carrega as seeds do arquivo JSON"""
-    seeds_file = os.path.join("..", "data", "seeds.json")
-    if not os.path.exists(seeds_file):
-        return []
-    try:
-        with open(seeds_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return []
+    """Carrega as seeds do arquivo JSON de forma robusta"""
+    # Tentar encontrar a pasta data independente de onde o script é corrido
+    possible_paths = [
+        os.path.join("data", "seeds.json"),
+        os.path.join("..", "data", "seeds.json"),
+        "seeds.json"
+    ]
+    
+    for seeds_file in possible_paths:
+        if os.path.exists(seeds_file):
+            try:
+                with open(seeds_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except:
+                pass
+    return []
 
 def procedure_matches_seed(proc: Dict, seed: Dict) -> bool:
     """Verifica se um procedimento corresponde a uma seed (Lógica idêntica ao scripts.js)"""
@@ -113,17 +120,28 @@ def send_notification(new_items: List[Dict]):
 
 def notify_new_items(current_items: List[Dict]):
     """Compara com os itens anteriores e notifica sobre os novos que dão match com as seeds"""
-    ativos_json = os.path.join("..", "data", "ativos.json")
     
-    # Se não houver arquivo anterior, consideramos todos os atuais como novos (para popular o sistema)
-    if not os.path.exists(ativos_json):
-        print("Primeira execução: nenhum arquivo ativos.json anterior para comparação.")
+    # Localizar ativos.json de forma robusta
+    ativos_json = None
+    possible_ativos = [
+        os.path.join("data", "ativos.json"),
+        os.path.join("..", "data", "ativos.json")
+    ]
+    
+    for p in possible_ativos:
+        if os.path.exists(p):
+            ativos_json = p
+            break
+
+    if not ativos_json:
+        print("Aviso: ativos.json não encontrado. Ignorando notificações.")
         return
 
     try:
         with open(ativos_json, 'r', encoding='utf-8') as f:
             old_items = json.load(f)
-    except:
+    except Exception as e:
+        print(f"Erro ao carregar ativos anteriores: {e}")
         old_items = []
 
     old_links = {item.get('link') for item in old_items if item.get('link')}
