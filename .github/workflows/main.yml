@@ -1,6 +1,9 @@
 name: Atualizar Feed RSS DRE
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     # Executar diariamente às 8:00 UTC
     - cron: "0 8 * * *"
