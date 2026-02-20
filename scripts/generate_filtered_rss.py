@@ -236,18 +236,21 @@ def generate_filtered_rss():
     targets = []
     
     # Root paths
-    if os.path.exists('RSS') or os.path.exists('package.json'):
+    is_root = os.path.exists('package.json') or os.path.exists('RSS')
+    is_parent_root = os.path.exists('../package.json') or os.path.exists('../RSS')
+
+    if is_root:
         targets.append('RSS')
-    elif os.path.exists('../RSS') or os.path.exists('../package.json'):
+    elif is_parent_root:
         targets.append('../RSS')
         
     # Public paths
-    if os.path.exists('public/RSS'):
-        if 'public/RSS' not in targets and '../public/RSS' not in targets:
-            targets.append('public/RSS')
-    elif os.path.exists('../public/RSS'):
-        if 'public/RSS' not in targets and '../public/RSS' not in targets:
-            targets.append('../public/RSS')
+    if os.path.exists('public'):
+        p = 'public/RSS'
+        if p not in targets: targets.append(p)
+    elif os.path.exists('../public'):
+        p = '../public/RSS'
+        if p not in targets: targets.append(p)
 
     if not targets:
         targets = ['RSS']

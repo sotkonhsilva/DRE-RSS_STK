@@ -36,20 +36,26 @@ def get_all_data_dirs():
     """
     Retorna todos os caminhos possíveis para o diretório data/
     """
-    current_dir = os.getcwd()
     targets = []
     
-    # Prioridade para Root data/ (para GitHub Pages)
-    root_paths = ['data', '../data']
-    for p in root_paths:
-        if os.path.exists(p) or os.path.exists(os.path.join(p, '..', 'package.json')):
-            if p not in targets: targets.append(p)
+    # 1. Root data/ (Prioridade para GitHub Pages)
+    # Se existe package.json ou pasta data
+    is_root = os.path.exists('package.json') or os.path.exists('data')
+    is_parent_root = os.path.exists('../package.json') or os.path.exists('../data')
+    
+    if is_root:
+        if 'data' not in targets: targets.append('data')
+    elif is_parent_root:
+        if '../data' not in targets: targets.append('../data')
             
-    # Public paths (para Next.js local)
-    public_paths = ['public/data', '../public/data']
-    for p in public_paths:
-        if os.path.exists(p):
-            if p not in targets: targets.append(p)
+    # 2. Public paths (para Next.js local)
+    # Se existe a pasta public, devemos garantir que data/ existe lá dentro
+    if os.path.exists('public'):
+        p = 'public/data'
+        if p not in targets: targets.append(p)
+    elif os.path.exists('../public'):
+        p = '../public/data'
+        if p not in targets: targets.append(p)
             
     if not targets:
         targets = ['data']

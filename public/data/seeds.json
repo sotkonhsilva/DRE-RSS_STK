@@ -1,0 +1,134 @@
+[
+    {
+        "code": "SEEDLIMPEZA",
+        "tags": [
+            "limpeza",
+            "higiene",
+            "resíduos",
+            "sanitária"
+        ],
+        "titleTags": [
+            "limpeza",
+            "higiene"
+        ],
+        "district": null,
+        "name": "Limpeza e Higiene (Título)",
+        "created": "2026-02-20T12:58:00.000000"
+    },
+    {
+        "code": "SEEDSOFTWARE",
+        "tags": [
+            "software",
+            "informática",
+            "computadores",
+            "licenciamento",
+            "nuvem",
+            "cloud"
+        ],
+        "titleTags": [
+            "software",
+            "desenvolvimento"
+        ],
+        "district": null,
+        "name": "Software e Informática (Título)",
+        "created": "2026-02-20T12:58:00.000000"
+    },
+    {
+        "code": "SEEDCONSTRUCAO",
+        "tags": [
+            "construção",
+            "reabilitação",
+            "obras",
+            "edifício",
+            "pavimentação"
+        ],
+        "titleTags": [
+            "obras",
+            "construção"
+        ],
+        "district": null,
+        "name": "Construção e Obras (Título)",
+        "created": "2026-02-20T12:58:00.000000"
+    },
+    {
+        "code": "SEEDVIGILANCIA",
+        "tags": [
+            "segurança",
+            "vigilância",
+            "alarme",
+            "cctv"
+        ],
+        "titleTags": [
+            "vigilância",
+            "segurança"
+        ],
+        "district": "Lisboa",
+        "name": "Segurança em Lisboa",
+        "created": "2026-02-20T12:58:00.000000"
+    },
+    {
+        "code": "SEED_SOTKON",
+        "tags": [
+            "contentor enterrado",
+            "contentores enterrados",
+            "ilha ecológica",
+            "ilhas ecológicas",
+            "equipamento subterrâneo",
+            "equipamentos subterrâneos",
+            "contentores subsolo",
+            "contentor subsolo",
+            "contentores em subsolo",
+            "contentor em subsolo",
+            "sotkon",
+            "contentores 3m",
+            "contentores 5",
+            "contentores 5m",
+            "ecoponto subterraneo",
+            "ecopontos subterraneos",
+            "contentorização enterrada",
+            "ecoilha",
+            "ecoilhas",
+            "contentor 3m3",
+            "contentores 3m3",
+            "contentor 5m3",
+            "contentores 5m3",
+            "cuba de polietileno",
+            "cubas de polietileno",
+            "contentor semienterrado",
+            "contentores semienterrados",
+            "contentores semi-enterrados",
+            "contentor semi-enterrado",
+            "contentor em profundidade",
+            "contentores em profundidade",
+            "equipamentos enterrados",
+            "residuos enterrados",
+            "payt",
+            "pay as you throw",
+            "contentor subterraneo",
+            "contentores subterraneos",
+            "equipamentos subterraneos",
+            "equipamento subterraneo",
+            "contentor subterrado",
+            "contentores subterrados",
+            "contentores soterrados",
+            "contentor soterrado",
+            "sopsa",
+            "formato verde",
+            "blue bee",
+            "sayt",
+            "rayt",
+            "gestão inteligente",
+            "formatoverde",
+            "formato bin",
+            "green bee",
+            "sensores de resíduos",
+            "ikonic",
+            "ikon",
+            "jose manuel novo"
+        ],
+        "titleTags": [],
+        "district": null,
+        "name": "Sotkon & Resíduos",
+        "created": "2026-02-20T16:15:00.000000"
+    }
+]
