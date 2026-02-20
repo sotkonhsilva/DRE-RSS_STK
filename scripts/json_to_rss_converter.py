@@ -187,10 +187,11 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     reparsed = minidom.parseString(rough_string)
     xml_str = reparsed.toxml(encoding='UTF-8').decode('utf-8')
     
-    # Processar CDATAs
+    # Processar CDATAs (em ordem inversa para evitar problemas com índices como 1 e 11)
     reconstructed = xml_str
     
-    for i, proc in enumerate(procedimentos):
+    for i in range(len(procedimentos) - 1, -1, -1):
+        proc = procedimentos[i]
         nipc = proc.get('nipc', 'N/A')
         entidade = proc.get('entidade_adjudicante', proc.get('entidade', 'N/A'))
         designacao = proc.get('designacao_contrato', proc.get('descricao', 'N/A'))
@@ -230,10 +231,21 @@ def main():
     Função principal
     """
     # Carregar dados do JSON
-    json_file = '../public/RSS/procedimentos_completos.json'
+    possible_paths = [
+        'public/RSS/procedimentos_completos.json',
+        '../public/RSS/procedimentos_completos.json',
+        'procedimentos_completos.json'
+    ]
     
-    if not os.path.exists(json_file):
-        print(f"❌ Arquivo {json_file} não encontrado!")
+    json_file = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            json_file = path
+            break
+            
+    if not json_file:
+        print(f"❌ Arquivo procedimentos_completos.json não encontrado!")
+        print("Caminhos tentados:", possible_paths)
         print("Execute primeiro o script rss_dre_extractor.py")
         return
     
@@ -264,9 +276,14 @@ def main():
     rss_content = create_rss_feed(procedimentos_processados)
     
     # Salvar feed RSS
-    output_file = '../public/RSS/feed_rss_procedimentos.xml'
+    # Tentar determinar a pasta public/RSS
+    rss_dir = 'public/RSS'
+    if not os.path.exists('public') and os.path.exists('../public'):
+        rss_dir = '../public/RSS'
+    
+    output_file = os.path.join(rss_dir, 'feed_rss_procedimentos.xml')
     try:
-        os.makedirs('../public/RSS', exist_ok=True)
+        os.makedirs(rss_dir, exist_ok=True)
         
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(rss_content)

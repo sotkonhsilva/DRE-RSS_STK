@@ -10,9 +10,19 @@ from datetime import datetime
 from typing import List, Dict, Optional
 
 class SeedManager:
-    def __init__(self, data_dir: str = "data"):
-        self.data_dir = data_dir
-        self.seeds_file = os.path.join(data_dir, "seeds.json")
+    def __init__(self, data_dir: str = None):
+        if data_dir is None:
+            # Tentar encontrar a pasta public/data
+            if os.path.exists("../public/data"):
+                self.data_dir = "../public/data"
+            elif os.path.exists("public/data"):
+                self.data_dir = "public/data"
+            else:
+                self.data_dir = "data"
+        else:
+            self.data_dir = data_dir
+        
+        self.seeds_file = os.path.join(self.data_dir, "seeds.json")
         self.ensure_data_dir()
     
     def ensure_data_dir(self):

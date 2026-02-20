@@ -9,9 +9,23 @@ from xml.dom import minidom
 
 def load_seeds() -> List[Dict]:
     """Carrega as seeds do arquivo JSON"""
-    seeds_file = os.path.join("..", "public", "data", "seeds.json")
-    if not os.path.exists(seeds_file):
+    # Tentar encontrar a pasta de dados
+    possible_paths = [
+        'public/data/seeds.json',
+        '../public/data/seeds.json',
+        'data/seeds.json',
+        'seeds.json'
+    ]
+    
+    seeds_file = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            seeds_file = path
+            break
+            
+    if not seeds_file:
         return []
+        
     try:
         with open(seeds_file, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -60,15 +74,29 @@ def generate_filtered_rss():
     """Gera um arquivo RSS contendo apenas procedimentos que dão match com as seeds"""
     print("📡 Gerando RSS filtrado personalizado...")
     
-    ativos_json = os.path.join("..", "public", "data", "ativos.json")
-    if not os.path.exists(ativos_json):
+    # Tentar encontrar a pasta de dados
+    possible_paths = [
+        'public/data/ativos.json',
+        '../public/data/ativos.json',
+        'data/ativos.json',
+        'ativos.json'
+    ]
+    
+    ativos_json = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            ativos_json = path
+            break
+            
+    if not ativos_json:
         print("Arquivo ativos.json não encontrado.")
         return
 
     try:
         with open(ativos_json, 'r', encoding='utf-8') as f:
             procedimentos = json.load(f)
-    except:
+    except Exception as e:
+        print(f"Erro ao ler ativos.json: {e}")
         return
 
     seeds = load_seeds()
@@ -149,9 +177,10 @@ def generate_filtered_rss():
     reparsed = minidom.parseString(rough_string)
     xml_str = reparsed.toxml(encoding='UTF-8').decode('utf-8')
     
-    # Processar CDATAs
+    # Processar CDATAs (em ordem inversa para evitar problemas com índices como 1 e 11)
     reconstructed = xml_str
-    for i, item in enumerate(filtered_items):
+    for i in range(len(filtered_items) - 1, -1, -1):
+        item = filtered_items[i]
         nipc = item.get('nipc', 'N/A')
         entidade = item.get('entidade_adjudicante', item.get('entidade', 'N/A'))
         designacao = item.get('descricao') or item.get('designacao_contrato') or "Procedimento sem título"
@@ -201,8 +230,13 @@ def generate_filtered_rss():
         reconstructed = reconstructed.replace(f"DESCRIPTION_CDATA_PLACEHOLDER_{i}", f"<![CDATA[{desc_html}]]>")
 
     # Salvar o arquivo
-    output_path = os.path.join("..", "public", "RSS", "feed_filtros_seeds.xml")
-    os.makedirs(os.path.join("..", "public", "RSS"), exist_ok=True)
+    # Tentar determinar a pasta public/RSS
+    rss_dir = 'public/RSS'
+    if not os.path.exists('public') and os.path.exists('../public'):
+        rss_dir = '../public/RSS'
+        
+    output_path = os.path.join(rss_dir, "feed_filtros_seeds.xml")
+    os.makedirs(rss_dir, exist_ok=True)
     
     with open(output_path, 'w', encoding='utf-8') as f:
         # Remover declaração xml duplicada se o minidom adicionar uma que não gostamos

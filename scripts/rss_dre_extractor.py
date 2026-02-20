@@ -214,10 +214,15 @@ def save_to_json(data: List[Dict[str, str]], filename: str = "procedimentos_dre.
     Salva os dados extraídos em formato JSON
     """
     try:
+        # Tentar determinar a pasta public/RSS
+        rss_dir = 'public/RSS'
+        if not os.path.exists('public') and os.path.exists('../public'):
+            rss_dir = '../public/RSS'
+            
         # Garantir que o diretório RSS existe
-        os.makedirs('../public/RSS', exist_ok=True)
+        os.makedirs(rss_dir, exist_ok=True)
         
-        filepath = os.path.join('../public/RSS', filename)
+        filepath = os.path.join(rss_dir, filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"Dados salvos com sucesso em {filepath}")
@@ -231,14 +236,19 @@ def save_to_json_with_date(data: List[Dict[str, str]]):
     try:
         from datetime import datetime
         
+        # Tentar determinar a pasta public/data
+        data_dir = 'public/data'
+        if not os.path.exists('public') and os.path.exists('../public'):
+            data_dir = '../public/data'
+            
         # Garantir que o diretório data existe
-        os.makedirs('../public/data', exist_ok=True)
+        os.makedirs(data_dir, exist_ok=True)
         
         # Obter data atual no formato DD-MM-YYYY
         current_date = datetime.now().strftime('%d-%m-%Y')
         filename = f"{current_date}.json"
         
-        filepath = os.path.join('../public/data', filename)
+        filepath = os.path.join(data_dir, filename)
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"Dados salvos com sucesso em {filepath}")
@@ -370,13 +380,13 @@ def main():
     print(f"\n🎉 Processo completo finalizado!")
     print(f"Procedimentos processados: {len(procedimentos_completos)}")
     print(f"📁 Arquivos gerados:")
-    print(f"  - ../public/RSS/procedimentos_basicos.json (dados do RSS)")
-    print(f"  - ../public/RSS/procedimentos_completos.json (dados + detalhes)")
+    print(f"  - public/RSS/procedimentos_basicos.json (dados do RSS)")
+    print(f"  - public/RSS/procedimentos_completos.json (dados + detalhes)")
     if data_file_path:
         print(f"  - {data_file_path} (dados completos com data)")
-    print(f"  - ../public/data/ativos.json (procedimentos ativos)")
-    print(f"  - ../public/RSS/feed_rss_procedimentos.xml (feed RSS completo)")
-    print(f"  - ../public/RSS/feed_filtros_seeds.xml (feed RSS filtrado por SEEDS)")
+    print(f"  - public/data/ativos.json (procedimentos ativos)")
+    print(f"  - public/RSS/feed_rss_procedimentos.xml (feed RSS completo)")
+    print(f"  - public/RSS/feed_filtros_seeds.xml (feed RSS filtrado por SEEDS)")
 
 if __name__ == "__main__":
     main() 
