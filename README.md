@@ -45,7 +45,7 @@ DRE-RSS/
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/DamiaoCode/DRE-RSS.git
+git clone https://github.com/sotkonhsilva/DRE-RSS_STK.git
 cd DRE-RSS
 ```
 
@@ -87,7 +87,7 @@ python serve.py
 Aceda a http://localhost:8000
 
 2. **GitHub Pages**:
-   Aceda a https://damiaocode.github.io/DRE-RSS/
+   Aceda a https://sotkonhsilva.github.io/DRE-RSS_STK/
 
 ### Sistema de Seeds
 
@@ -221,10 +221,10 @@ Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes
 
 ## 🔗 Links Úteis
 
-- **Interface Web**: https://damiaocode.github.io/DRE-RSS/
+- **Interface Web**: https://sotkonhsilva.github.io/DRE-RSS_STK/
 - **RSS Feed Original**: https://files.diariodarepublica.pt/rss/serie2&parte=l-html.xml
 - **Diário da República**: https://diariodarepublica.pt/
-- **Feed RSS Gerado**: https://damiaocode.github.io/DRE-RSS/RSS/feed_rss_procedimentos.xml
+- **Feed RSS Gerado**: https://sotkonhsilva.github.io/DRE-RSS_STK/RSS/feed_rss_procedimentos.xml
 
 ## 🆕 Novidades
 

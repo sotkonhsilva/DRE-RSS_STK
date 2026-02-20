@@ -303,10 +303,17 @@ def main():
     print("\n🔄 Atualizando arquivo ativos.json...")
     try:
         from gerir_ativos import update_ativos_from_date_file, merge_with_existing_ativos, save_ativos
+        from notify_new_items import notify_new_items
         
         if data_file_path:
             # Obter procedimentos ativos do arquivo de data
             procedimentos_ativos = update_ativos_from_date_file(data_file_path)
+            
+            # --- NOTIFICAÇÃO ---
+            # Notificar ANTES de fazer o merge definitivo (para saber o que é realmente novo)
+            print("📬 Verificando notificações para novos itens...")
+            notify_new_items(procedimentos_ativos)
+            # -------------------
             
             # Combinar com procedimentos ativos existentes
             ativos_finais = merge_with_existing_ativos(procedimentos_ativos)
@@ -351,6 +358,15 @@ def main():
     except Exception as e:
         print(f"❌ Erro inesperado ao gerar feed RSS: {e}")
     
+    # --- GERAÇÃO DE RSS FILTRADO (SEEDS) ---
+    print("\n📡 Gerando RSS personalizado (Seeds)...")
+    try:
+        from generate_filtered_rss import generate_filtered_rss
+        generate_filtered_rss()
+    except Exception as e:
+        print(f"❌ Erro ao gerar RSS filtrado: {e}")
+    # -------------------------------------
+    
     print(f"\n🎉 Processo completo finalizado!")
     print(f"Procedimentos processados: {len(procedimentos_completos)}")
     print(f"📁 Arquivos gerados:")
@@ -360,6 +376,7 @@ def main():
         print(f"  - {data_file_path} (dados completos com data)")
     print(f"  - ../data/ativos.json (procedimentos ativos)")
     print(f"  - ../RSS/feed_rss_procedimentos.xml (feed RSS completo)")
+    print(f"  - ../RSS/feed_filtros_seeds.xml (feed RSS filtrado por SEEDS)")
 
 if __name__ == "__main__":
     main() 

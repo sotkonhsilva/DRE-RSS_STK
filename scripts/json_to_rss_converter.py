@@ -121,11 +121,11 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
     description.text = 'Feed RSS com procedimentos do Diário da República - Série II - Parte L'
     
     link = ET.SubElement(channel, 'link')
-    link.text = 'https://joaodamiao.github.io/RSS-DRE/'
+    link.text = 'https://sotkonhsilva.github.io/DRE-RSS_STK/'
     
     # Link atom para auto-descoberta
     atom_link = ET.SubElement(channel, '{http://www.w3.org/2005/Atom}link')
-    atom_link.set('href', 'https://joaodamiao.github.io/RSS-DRE/feed_rss_procedimentos.xml')
+    atom_link.set('href', 'https://sotkonhsilva.github.io/DRE-RSS_STK/feed_rss_procedimentos.xml')
     atom_link.set('rel', 'self')
     atom_link.set('type', 'application/rss+xml')
     

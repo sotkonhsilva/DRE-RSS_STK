@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal de Procedimentos - Diário da República</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="header">
         <h1>Portal de Procedimentos</h1>
@@ -17,17 +19,21 @@
         <div class="search-section">
             <h3 style="margin-bottom: 1.5rem; color: #2a5298; font-weight: 600;">🔍 Pesquisar Procedimentos</h3>
             <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar por entidade, descrição, localização, preço, prazo..." onkeyup="filterProcedimentos()">
+                <input type="text" id="searchInput" class="search-input"
+                    placeholder="Pesquisar por entidade, descrição, localização, preço, prazo..."
+                    onkeyup="filterProcedimentos()">
                 <button class="search-btn" onclick="filterProcedimentos()">Pesquisar</button>
                 <button class="clear-btn" onclick="clearSearch()">Limpar</button>
             </div>
-            
-            <div class="seed-search-container" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+
+            <div class="seed-search-container"
+                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
                 <h4 style="margin-bottom: 1rem; color: #2a5298; font-weight: 600;">🌱 Pesquisar por Seed</h4>
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="seedSearchInput" class="search-input" placeholder="Digite o código da seed (ex: SEED123456)" style="flex: 1; min-width: 250px;">
+                    <input type="text" id="seedSearchInput" class="search-input"
+                        placeholder="Digite o código da seed (ex: SEED123456)" style="flex: 1; min-width: 250px;">
                     <button class="search-btn" onclick="searchBySeed()">Aplicar Seed</button>
-                    <button class="clear-btn" onclick="showAvailableSeeds()" >🔍 Consultar Seeds</button>
+                    <button class="clear-btn" onclick="showAvailableSeeds()">🔍 Consultar Seeds</button>
                 </div>
                 <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #6c757d;">
                     💡 Digite o código da seed para filtrar procedimentos automaticamente
@@ -35,7 +41,8 @@
             </div>
             <div class="search-info">
                 <div>
-                    <strong>💡 Dica:</strong> A pesquisa funciona em todos os campos: entidade, descrição, localização, preço base, prazo de apresentação, NIPC, etc.
+                    <strong>💡 Dica:</strong> A pesquisa funciona em todos os campos: entidade, descrição, localização,
+                    preço base, prazo de apresentação, NIPC, etc.
                 </div>
                 <button class="create-seed-btn" onclick="openSeedModal()">🌱 Criar Seed</button>
             </div>
@@ -48,14 +55,17 @@
                     <h3 class="modal-title">🌱 Criar Nova Seed</h3>
                     <button class="close-btn" onclick="closeSeedModal()">&times;</button>
                 </div>
-                
+
                 <div class="seed-info">
-                    <strong>Como usar:</strong> Digite palavras-chave separadas por vírgulas ou pressione Enter para criar tags individuais. 
+                    <strong>Como usar:</strong> Digite palavras-chave separadas por vírgulas ou pressione Enter para
+                    criar tags individuais.
                     Estas seeds serão usadas para filtrar procedimentos automaticamente.
                 </div>
-                
+
                 <div class="seed-input-container">
-                    <label for="districtSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">🗺️ Distrito:</label>
+                    <label for="districtSelect"
+                        style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">🗺️
+                        Distrito:</label>
                     <select id="districtSelect" class="seed-input" style="margin-bottom: 1rem;">
                         <option value="">Todos os distritos</option>
                         <option value="Aveiro">Aveiro</option>
@@ -79,14 +89,28 @@
                         <option value="Açores">Açores</option>
                         <option value="Madeira">Madeira</option>
                     </select>
-                    
-                    <label for="seedInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">🏷️ Palavras-chave:</label>
-                    <input type="text" id="seedInput" class="seed-input" placeholder="Ex: construção, informática, saúde, educação..." onkeydown="handleSeedInput(event)">
-                    <div id="tagsContainer" class="tags-container">
+
+                    <label for="seedInput"
+                        style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50;">🏷️
+                        Palavras-chave (Global):</label>
+                    <input type="text" id="seedInput" class="seed-input" placeholder="Ex: construção, informática..."
+                        onkeydown="handleSeedInput(event, 'global')">
+                    <div id="tagsContainer" class="tags-container" style="margin-bottom: 1rem;">
                         <!-- As tags serão inseridas aqui dinamicamente -->
                     </div>
+
+                    <label for="titleSeedInput"
+                        style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2a5298;">📌
+                        Palavras-chave (Título/Descrição):</label>
+                    <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">Estas palavras DEVEM aparecer
+                        obrigatoriamente no título do procedimento.</div>
+                    <input type="text" id="titleSeedInput" class="seed-input" placeholder="Ex: limpeza, software..."
+                        onkeydown="handleSeedInput(event, 'title')">
+                    <div id="titleTagsContainer" class="tags-container">
+                        <!-- As tags de título serão inseridas aqui dinamicamente -->
+                    </div>
                 </div>
-                
+
                 <div class="modal-actions">
                     <button class="cancel-btn" onclick="closeSeedModal()">Cancelar</button>
                     <button class="save-seed-btn" onclick="saveSeed()">Guardar Seed</button>
@@ -100,7 +124,8 @@
             <div id="activeSeeds" class="active-seeds">
                 <!-- Seeds ativas serão inseridas aqui -->
             </div>
-            <button class="clear-seeds-btn" onclick="clearActiveSeeds()" style="margin-top: 0.5rem;">Limpar Seeds</button>
+            <button class="clear-seeds-btn" onclick="clearActiveSeeds()" style="margin-top: 0.5rem;">Limpar
+                Seeds</button>
         </div>
 
         <!-- Modal para mostrar seeds existentes -->
@@ -110,48 +135,49 @@
                     <h3 class="modal-title">🌱 Seeds Disponíveis</h3>
                     <button class="close-btn" onclick="closeSeedsListModal()">&times;</button>
                 </div>
-                
+
                 <div id="seedsListContainer" style="max-height: 400px; overflow-y: auto;">
                     <!-- Lista de seeds será inserida aqui -->
                 </div>
-                
+
                 <div class="modal-actions">
                     <button class="cancel-btn" onclick="closeSeedsListModal()">Fechar</button>
                 </div>
             </div>
         </div>
-        </div>
+    </div>
 
-        <div id="loading" class="loading">
-            <h3>Carregando procedimentos...</h3>
-            <p>Aguarde enquanto carregamos os dados mais recentes.</p>
-        </div>
+    <div id="loading" class="loading">
+        <h3>Carregando procedimentos...</h3>
+        <p>Aguarde enquanto carregamos os dados mais recentes.</p>
+    </div>
 
-        <div id="error" class="error" style="display: none;">
-            <h3>Erro ao carregar dados</h3>
-            <p>Não foi possível carregar os procedimentos. Verifique se o arquivo ativos.json existe.</p>
-        </div>
+    <div id="error" class="error" style="display: none;">
+        <h3>Erro ao carregar dados</h3>
+        <p>Não foi possível carregar os procedimentos. Verifique se o arquivo ativos.json existe.</p>
+    </div>
 
-        <div id="tableContainer" class="table-container" style="display: none;">
-            <table class="procedures-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;"></th>
-                        <th class="sortable" data-sort="descricao">Descrição</th>
-                        <th class="sortable" data-sort="entidade">Entidade</th>
-                        <th class="sortable" data-sort="plataforma">Plataforma</th>
-                        <th class="sortable" data-sort="publicacao">Publicação</th>
-                        <th class="sortable" data-sort="prazo">Prazo</th>
-                        <th class="sortable" data-sort="preco">Preço Base</th>
-                    </tr>
-                </thead>
-                <tbody id="proceduresTableBody">
-                    <!-- Os procedimentos serão inseridos aqui dinamicamente -->
-                </tbody>
-            </table>
-        </div>
+    <div id="tableContainer" class="table-container" style="display: none;">
+        <table class="procedures-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;"></th>
+                    <th class="sortable" data-sort="descricao">Descrição</th>
+                    <th class="sortable" data-sort="entidade">Entidade</th>
+                    <th class="sortable" data-sort="plataforma">Plataforma</th>
+                    <th class="sortable" data-sort="publicacao">Publicação</th>
+                    <th class="sortable" data-sort="prazo">Prazo</th>
+                    <th class="sortable" data-sort="preco">Preço Base</th>
+                </tr>
+            </thead>
+            <tbody id="proceduresTableBody">
+                <!-- Os procedimentos serão inseridos aqui dinamicamente -->
+            </tbody>
+        </table>
+    </div>
     </div>
 
     <script src="scripts.js"></script>
 </body>
+
 </html>
