@@ -10,6 +10,9 @@ on:
   workflow_dispatch:
     # Permitir execução manual
 
+permissions:
+  contents: write
+
 jobs:
   update-rss:
     runs-on: ubuntu-latest
