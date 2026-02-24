@@ -1,36 +1,63 @@
 import json
 import os
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 from typing import List, Dict
+
+# Procedimentos sem prazo extraído expiram após este número de dias desde a publicação
+FALLBACK_DAYS_ACTIVE = 60
 
 def parse_date(date_str: str) -> datetime:
     """
     Converte string de data no formato DD-MM-YYYY HH:MM para datetime
     """
     try:
-        # Formato esperado: "08-08-2025 18:00"
         return datetime.strptime(date_str, '%d-%m-%Y %H:%M')
     except ValueError:
-        # Se não conseguir fazer parse, retornar uma data muito antiga
-        return datetime(1900, 1, 1)
+        try:
+            return datetime.strptime(date_str, '%d-%m-%Y')
+        except ValueError:
+            return datetime(1900, 1, 1)
+
+def get_publication_date(procedure: Dict) -> datetime:
+    """
+    Tenta extrair a data de publicação do campo detalhes_completos.
+    Retorna None se não encontrar.
+    """
+    detalhes = procedure.get('detalhes_completos', '') or ''
+    match = re.search(r'Data de Envio do Anúncio:\s*(\d{2}-\d{2}-\d{4})', detalhes)
+    if match:
+        try:
+            return datetime.strptime(match.group(1), '%d-%m-%Y')
+        except:
+            pass
+    return None
 
 def is_procedure_active(procedure: Dict) -> bool:
     """
-    Verifica se um procedimento está ativo (prazo de apresentação ainda válido)
+    Verifica se um procedimento está ativo (prazo de apresentação ainda válido).
+    Quando o prazo não está disponível, usa a data de publicação como fallback:
+    considera ativo por FALLBACK_DAYS_ACTIVE dias após a publicação.
     """
     prazo_str = procedure.get('prazo_apresentacao_propostas')
-    
-    if not prazo_str or prazo_str == 'N/A':
-        return False
-    
-    try:
-        prazo_date = parse_date(prazo_str)
-        current_date = datetime.now()
-        
-        # Procedimento está ativo se o prazo for >= data atual
-        return prazo_date >= current_date
-    except:
-        return False
+    current_date = datetime.now()
+
+    if prazo_str and prazo_str != 'N/A':
+        try:
+            prazo_date = parse_date(prazo_str)
+            if prazo_date.year > 1900:  # data válida
+                return prazo_date >= current_date
+        except:
+            pass
+
+    # Fallback: usar data de publicação
+    pub_date = get_publication_date(procedure)
+    if pub_date:
+        expiry = pub_date + timedelta(days=FALLBACK_DAYS_ACTIVE)
+        return current_date <= expiry
+
+    # Sem data de publicação nem prazo: assumir expirado para não acumular indefinidamente
+    return False
 
 def get_all_data_dirs():
     """
