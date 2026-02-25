@@ -11,6 +11,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir not in sys.path:
     sys.path.append(script_dir)
 
+from datetime import datetime
 from typing import List, Dict
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -239,7 +240,6 @@ def save_to_json_with_date(data: List[Dict[str, str]]):
     Salva os dados extraídos em formato JSON na pasta data/ com nome baseado na data atual
     """
     try:
-        from datetime import datetime
         # Obter data atual no formato DD-MM-YYYY
         current_date = datetime.now().strftime('%d-%m-%Y')
         filename = f"{current_date}.json"
