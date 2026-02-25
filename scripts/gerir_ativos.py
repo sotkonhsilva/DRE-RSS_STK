@@ -50,13 +50,34 @@ def is_procedure_active(procedure: Dict) -> bool:
         except:
             pass
 
-    # Fallback: usar data de publicação
+    # Fallback 1: usar data de publicação extraída dos detalhes
     pub_date = get_publication_date(procedure)
     if pub_date:
         expiry = pub_date + timedelta(days=FALLBACK_DAYS_ACTIVE)
         return current_date <= expiry
 
-    # Sem data de publicação nem prazo: assumir expirado para não acumular indefinidamente
+    # Fallback 2: usar data de extração se disponível (para itens ainda não processados)
+    ext_date_str = procedure.get('data_extracao')
+    if ext_date_str:
+        try:
+            # Tentar vários formatos comuns
+            ext_date = parse_date(ext_date_str)
+            if ext_date.year > 1900:
+                expiry = ext_date + timedelta(days=FALLBACK_DAYS_ACTIVE)
+                return current_date <= expiry
+        except:
+            pass
+
+    # Se não tem detalhes_completos, é um item novo que ainda não foi processado.
+    # Devemos mantê-lo ativo para que apareça nos feeds básicos até ser processado.
+    if not procedure.get('detalhes_completos'):
+        # Como não sabemos a data, assumimos que é novo. 
+        # Para evitar acumular lixo, se o procedimento já é conhecido mas continua sem detalhes 
+        # após muito tempo, eventualmente expirará aqui se guardarmos a data de extração.
+        return True
+
+    # Sem data de publicação, sem data de extração, mas tem detalhes (e falhou nos checks acima):
+    # assumir expirado para não acumular indefinidamente
     return False
 
 def get_all_data_dirs():

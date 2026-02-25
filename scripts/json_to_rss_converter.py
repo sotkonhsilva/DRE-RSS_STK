@@ -169,14 +169,37 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
         pub_date_item = ET.SubElement(item, 'pubDate')
         detalhes = proc.get('detalhes_completos', '')
         envio_match = re.search(r'Data de Envio do Anúncio:\s*(\d{2}-\d{2}-\d{4})', detalhes)
+        
+        # Obter data de fallback do campo data_extracao
+        fallback_date_str = proc.get('data_extracao', '')
+        fallback_dt = None
+        if fallback_date_str:
+            try:
+                # Tentar o formato de data simples DD-MM-YYYY
+                fallback_dt = datetime.strptime(fallback_date_str.split()[0], '%d-%m-%Y')
+            except:
+                try:
+                    # Tentar formato RFC 822 se vier direto do RSS original
+                    import email.utils
+                    parsed_date = email.utils.parsedate_to_datetime(fallback_date_str)
+                    fallback_dt = parsed_date
+                except:
+                    pass
+
         if envio_match:
             try:
                 dt = datetime.strptime(envio_match.group(1), '%d-%m-%Y')
                 pub_date_item.text = dt.strftime("%a, %d %b %Y 00:00:00 GMT")
             except:
-                pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+                if fallback_dt:
+                    pub_date_item.text = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+                else:
+                    pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
         else:
-            pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+            if fallback_dt:
+                pub_date_item.text = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            else:
+                pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
         
         # Placeholder
         item_description = ET.SubElement(item, 'description')

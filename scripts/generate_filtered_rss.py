@@ -36,12 +36,17 @@ def load_seeds() -> List[Dict]:
 def procedure_matches_seed(proc: Dict, seed: Dict) -> bool:
     """Verifica se um procedimento corresponde a uma seed"""
     if seed.get('district'):
-        proc_district = proc.get('distrito', '').lower()
+        proc_district = proc.get('distrito')
         seed_district = seed['district'].lower()
-        if proc_district != seed_district:
+        # Se o distrito está presente, deve ser exatamente igual
+        if proc_district and proc_district.lower() != seed_district:
             return False
+        # Se o distrito não está presente (procedimento ainda não processado),
+        # podemos opcionalmente deixar passar ou tentar um match no texto.
+        # Por agora, para sementes de distrito, só filtramos se soubermos o distrito.
 
-    title_text = (proc.get('descricao') or proc.get('designacao_contrato') or '').lower()
+    # Usar campos de título disponíveis, com fallback para o título básico do RSS (entidade)
+    title_text = (proc.get('descricao') or proc.get('designacao_contrato') or proc.get('entidade', '')).lower()
     
     other_fields = [
         proc.get('entidade', ''),
@@ -56,11 +61,13 @@ def procedure_matches_seed(proc: Dict, seed: Dict) -> bool:
 
     title_tags = seed.get('titleTags', [])
     if title_tags:
+        # Match se qualquer tag de título estiver no texto do título
         if not any(tag.lower() in title_text for tag in title_tags):
             return False
 
     global_tags = seed.get('tags', [])
     if global_tags:
+        # Match se qualquer tag global estiver em qualquer campo de texto
         if not any(tag.lower() in full_text for tag in global_tags):
             return False
             

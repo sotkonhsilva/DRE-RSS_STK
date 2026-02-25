@@ -190,10 +190,15 @@ def parse_rss_to_json(xml_content: str) -> List[Dict[str, str]]:
                 # Extrair informações do procedimento
                 procedure_info = extract_procedure_info(title, description)
                 
+                # Obter data do item se disponível
+                item_pub_date = item.find('pubDate')
+                item_date_str = item_pub_date.text if item_pub_date is not None else datetime.now().strftime('%d-%m-%Y')
+                
                 item_data = {
                     "numero_procedimento": procedure_info["numero_procedimento"],
                     "entidade": procedure_info["entidade"],
-                    "link": link
+                    "link": link,
+                    "data_extracao": item_date_str
                 }
                 
                 extracted_data.append(item_data)
