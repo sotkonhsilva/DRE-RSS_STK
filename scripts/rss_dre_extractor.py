@@ -309,6 +309,10 @@ def main():
     print(f"\nExtraindo detalhes de {len(extracted_data)} procedimentos...")
     procedimentos_completos = []
     
+    # Limitar o número de scrapings por execução para não exceder o tempo do GitHub Actions
+    MAX_SCRAPE = 25
+    scraped_count = 0
+    
     driver = setup_driver()
     try:
         for i, item in enumerate(extracted_data):
@@ -320,6 +324,12 @@ def main():
                 print(f"  ⚡ Já existe na base de dados, ignorando fetch")
                 procedimentos_completos.append(existing_data[link])
                 continue
+            
+            # Se atingimos o limite de scraping, adicionar apenas os dados básicos
+            if scraped_count >= MAX_SCRAPE:
+                print(f"  ⚠️ Limite de scraping atingido ({MAX_SCRAPE}), guardando apenas dados básicos")
+                procedimentos_completos.append(item)
+                continue
 
             # Extrair detalhes do procedimento
             details = fetch_procedure_details(driver, link)
@@ -327,7 +337,8 @@ def main():
             if details:
                 item_completo = {**item, **details}
                 procedimentos_completos.append(item_completo)
-                print(f"  ✓ Detalhes extraídos")
+                scraped_count += 1
+                print(f"  ✓ Detalhes extraídos ({scraped_count}/{MAX_SCRAPE})")
             else:
                 procedimentos_completos.append(item)
                 print(f"  ✗ Falha na extração de detalhes")
@@ -382,19 +393,12 @@ def main():
         
         converter_path = os.path.join(script_dir, "json_to_rss_converter.py")
         print(f"Executando conversor JSON para RSS: {converter_path}")
-        result = subprocess.run([sys.executable, converter_path], 
-                              capture_output=True, text=True, check=True)
+        # Remover capture_output para ver logs em tempo real
+        subprocess.run([sys.executable, converter_path], check=True)
         
         print("✅ Feed RSS gerado com sucesso!")
-        print("📄 Arquivo criado: ../public/RSS/feed_rss_procedimentos.xml")
+        # Arquivo pode ser salvo em várias pastas, json_to_rss_converter.py já imprime as localizações
         
-        # Mostrar estatísticas do feed RSS
-        if "Total de procedimentos processados:" in result.stdout:
-            print("\n📊 Estatísticas do Feed RSS:")
-            for line in result.stdout.split('\n'):
-                if "Estatísticas:" in line or "procedimentos" in line:
-                    print(f"  {line}")
-                    
     except subprocess.CalledProcessError as e:
         print(f"❌ Erro ao gerar feed RSS: {e}")
         print(f"Erro: {e.stderr}")
