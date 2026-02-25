@@ -380,8 +380,9 @@ def main():
         import subprocess
         import sys
         
-        print("Executando conversor JSON para RSS...")
-        result = subprocess.run([sys.executable, "json_to_rss_converter.py"], 
+        converter_path = os.path.join(script_dir, "json_to_rss_converter.py")
+        print(f"Executando conversor JSON para RSS: {converter_path}")
+        result = subprocess.run([sys.executable, converter_path], 
                               capture_output=True, text=True, check=True)
         
         print("✅ Feed RSS gerado com sucesso!")
