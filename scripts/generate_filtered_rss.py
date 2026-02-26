@@ -163,9 +163,28 @@ def generate_filtered_rss():
         
         # pubDate é CRITICO para Outlook
         pub_date_elem = ET.SubElement(rss_item, "pubDate")
+        
+        fallback_date_str = item.get('data_extracao', '')
+        fallback_dt = None
+        if fallback_date_str:
+            try:
+                # Tentar formato simples DD-MM-YYYY
+                fallback_dt = datetime.strptime(fallback_date_str.split()[0], '%d-%m-%Y')
+            except:
+                try:
+                    # Tentar formato RFC 822 se vier direto do RSS original
+                    import email.utils
+                    parsed_date = email.utils.parsedate_to_datetime(fallback_date_str)
+                    fallback_dt = parsed_date
+                except:
+                    pass
+
         detalhes = item.get('detalhes_completos', '')
         envio_match = re.search(r'Data de Envio do Anúncio:\s*(\d{2}-\d{2}-\d{4})', detalhes)
-        if envio_match:
+        
+        if fallback_dt:
+            pub_date_elem.text = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        elif envio_match:
             try:
                 dt = datetime.strptime(envio_match.group(1), '%d-%m-%Y')
                 pub_date_elem.text = dt.strftime("%a, %d %b %Y 00:00:00 GMT")

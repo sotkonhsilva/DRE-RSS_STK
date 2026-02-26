@@ -186,20 +186,16 @@ def create_rss_feed(procedimentos: List[Dict]) -> str:
                 except:
                     pass
 
-        if envio_match:
+        if fallback_dt:
+            pub_date_item.text = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        elif envio_match:
             try:
                 dt = datetime.strptime(envio_match.group(1), '%d-%m-%Y')
                 pub_date_item.text = dt.strftime("%a, %d %b %Y 00:00:00 GMT")
             except:
-                if fallback_dt:
-                    pub_date_item.text = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-                else:
-                    pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
-        else:
-            if fallback_dt:
-                pub_date_item.text = fallback_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-            else:
                 pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        else:
+            pub_date_item.text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
         
         # Placeholder
         item_description = ET.SubElement(item, 'description')
